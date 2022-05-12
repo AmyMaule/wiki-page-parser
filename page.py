@@ -22,7 +22,7 @@ def remove_refs(input):
 
   return input
 
-# @app.route('/page/<title>', methods=['GET'])
+@app.route('/page/<title>', methods=['GET'])
 def page(title):
   URL = "https://en.wikipedia.org/wiki/%s" % title
   page = requests.get(URL)
