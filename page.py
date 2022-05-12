@@ -12,19 +12,23 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 
 def remove_refs(input):
   # remove references in square brackets such as [1]
-  input = re.sub('[\[0-9\]]', '', input)
+  input = re.sub('\[[0-9]+\]', '', input)
+  
+  # remove single characters in square brackets such as [b]
+  input = re.sub('\[[a-z]\]', '', input)
   
   # remove the escape backslash before a single quote
   input = re.sub('[\\\']', '\'', input)
 
   return input
 
-@app.route('/page/<title>', methods=['GET'])
+# @app.route('/page/<title>', methods=['GET'])
 def page(title):
   URL = "https://en.wikipedia.org/wiki/%s" % title
   page = requests.get(URL)
   soup = BeautifulSoup(page.content, "lxml")
 
+  # page_tags will hold all tags and their text content
   page_tags = []
 
   title = soup.find(id="firstHeading").get_text()
@@ -37,7 +41,7 @@ def page(title):
       inner_text = remove_refs(sibling.text.strip())
       
       # add the tag plus its text in reverse order to page_tags
-      page_tags.insert(0, [sibling.name, inner_text])
+      page_tags.insert(0, [sibling.name, inner_text]) ###
 
   # for all remaining p, h2, h3, h4 and ul tags after the table of contents
   for tag in soup.find(id="toc").next_siblings:
@@ -52,20 +56,22 @@ def page(title):
       if inner_text == "See also" or inner_text == "Notes":
         break
 
-      page_tags.append([tag.name, inner_text])
+      if inner_text != "":
+        page_tags.append([tag.name, inner_text])
 
     if tag.name == "ul":
       ul_contents = []
       for li_tag in tag:
         li_tag = li_tag.text.strip()
         if len(li_tag) != 0:
+          li_tag = remove_refs(li_tag)
           ul_contents.append(li_tag)
+
       # if a ul tag is immediate followed by another ul tag, the second ul is typically a visual object
-      if page_tags[-1][0] != "ul":    
+      if len(page_tags) != 0 and page_tags[-1][0] != "ul":    
         page_tags.append([tag.name, ul_contents])
 
   return jsonify({"title": title, "body": page_tags})
-
 
 
 if __name__ == '__main__':
