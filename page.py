@@ -28,7 +28,7 @@ def page(title):
   page_tags = []
 
   title = soup.find(id="firstHeading").get_text()
-  body_text = soup.find(id="mw-content-text")#.get_text()
+  body_text = soup.find(id="mw-content-text")
   
   # toc is the table of contents, this finds the p tags before the toc in reverse order
   for sibling in soup.find(id="toc").previous_siblings:
@@ -48,8 +48,8 @@ def page(title):
       if inner_text[-4:] == "edit":
         inner_text = inner_text[:-4]
 
-      # The article should end at the "See also" heading
-      if inner_text == "See also":
+      # The article should end at either the "See also" or "Notes" headings, not all articles have both
+      if inner_text == "See also" or inner_text == "Notes":
         break
 
       page_tags.append([tag.name, inner_text])
@@ -60,9 +60,11 @@ def page(title):
         li_tag = li_tag.text.strip()
         if len(li_tag) != 0:
           ul_contents.append(li_tag)
-      page_tags.append([tag.name, ul_contents])
+      # if a ul tag is immediate followed by another ul tag, the second ul is typically a visual object
+      if page_tags[-1][0] != "ul":    
+        page_tags.append([tag.name, ul_contents])
 
-  return jsonify(page_tags)
+  return jsonify({"title": title, "body": page_tags})
 
 
 
