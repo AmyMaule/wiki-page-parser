@@ -41,7 +41,8 @@ def page(title):
       inner_text = remove_refs(sibling.text.strip())
       
       # add the tag plus its text in reverse order to page_tags
-      page_tags.insert(0, [sibling.name, inner_text]) ###
+      if len(inner_text) != 0:    
+        page_tags.insert(0, [sibling.name, inner_text])
 
   # for all remaining p, h2, h3, h4 and ul tags after the table of contents
   for tag in soup.find(id="toc").next_siblings:
@@ -71,7 +72,25 @@ def page(title):
       if len(page_tags) != 0 and page_tags[-1][0] != "ul":    
         page_tags.append([tag.name, ul_contents])
 
-  return jsonify({"title": title, "body": page_tags})
+  body_as_words = []
+  
+  for tag in page_tags:
+    txt = tag[1]
+    
+    # ul tags are of type "list" so need to be split into strings before they can be split into words
+    if isinstance(txt, list):
+      full_list = []
+      for list_instance in txt:
+        txt_as_words = re.split('(\W+)', list_instance)
+        full_list.append(txt_as_words)
+      body_as_words.append([tag[0], full_list])
+        
+    else:
+      # split the text into words "word" "," "word2", ";" etc
+      txt_as_words = re.split('(\W+)', txt)
+      body_as_words.append([tag[0], txt_as_words])
+
+  return jsonify({"title": title, "body": page_tags, "body_as_words": body_as_words})
 
 
 if __name__ == '__main__':
