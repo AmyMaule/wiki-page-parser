@@ -37,17 +37,6 @@ def page(title):
   # toc is the table of contents, this finds the p tags before the toc in reverse order
   for sibling in soup.find(id="toc").previous_siblings:
     if sibling.name == "p":
-
-      inner_text = sibling.text.strip()
-
-      # strip out all inner tags except italic tags
-      for inner_tag in sibling:
-        if inner_tag.name == "i":
-          inner_tag_text = inner_tag.text.strip()
-          # only replace the inner text within the i tags if it has not already been replaced
-          if "<i>%s" % inner_tag_text not in inner_text:
-            inner_text = inner_text.replace(inner_tag_text, "<i>%s</i>" % inner_tag_text)
-
       # remove all inner tags (eg. <p><a href="#">Link</a><p> becomes "Link")
       inner_text = remove_refs(sibling.text.strip())
       
@@ -55,21 +44,11 @@ def page(title):
       if len(inner_text) != 0:    
         page_tags.insert(0, [sibling.name, inner_text])
 
+
   # for all remaining p, h2, h3, h4 and ul tags after the table of contents
   for tag in soup.find(id="toc").next_siblings:
     if tag.name == "p" or tag.name == "h2" or tag.name == "h3" or tag.name == "h4":
-
-      inner_text = tag.text.strip()
-
-      # strip out all inner tags except italic tags
-      for inner_tag in tag:
-        if inner_tag.name == "i":
-          inner_tag_text = inner_tag.text.strip()
-          # only replace the inner text within the i tags if it has not already been replaced
-          if "<i>%s" % inner_tag_text not in inner_text:
-            inner_text = inner_text.replace(inner_tag_text, "<i>%s</i>" % inner_tag_text)
-
-      inner_text = remove_refs(inner_text)
+      inner_text = remove_refs(tag.text.strip())
 
       # the last 4 chars of h2, h3 and h4 tags are typically "edit"
       if inner_text[-4:] == "edit":
@@ -111,7 +90,7 @@ def page(title):
       # split the text into words "word" "," "word2", ";" etc
       txt_as_words = re.split('(\W+)', txt)
       body_as_words.append([tag[0], txt_as_words])
-
+      
   return jsonify({"title": title, "body": page_tags, "body_as_words": body_as_words})
 
 
